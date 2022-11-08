@@ -1,37 +1,117 @@
 from tkinter import *
 from tkinter import messagebox
+from fractions import Fraction
+import matplotlib
+import matplotlib.pyplot as plt
+import math
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+matplotlib.use('TkAgg')
 import re
+
 """Palabras claves
 Homepage-> Ventana principal de saludo
 Mainpage-> Ventana de ingreso de polinomios(Inicio de la calculadora)
 Bloqueuno-> Pantalla donde hay un solo bloque para escribir
 Bloquedos-> Pantalla donde hay dos bloques para escribir
 """
-def verificacaracter(string): #Podria ser mas especifico
-    habilitado=['0','1','2','3','4','5','6','7','8','9','^','-','+','x']
 
+
+def listtostring(polinomio): #DE LA MATRIZ DEVUELTA POR SEPARAPOL-> CONVIERTE TODO ESO JUNTOS EN UNA MISMA CADENA OTRA VEZ
+    stringlist=[]
+    for i in range(len(polinomio)):
+        if not isinstance(polinomio[i][1],str):
+            if polinomio[i][1]>1 and polinomio[i][0] != 1 and polinomio[i][0]!=-1:
+                temp=str(polinomio[i][0])+'x^'+str(polinomio[i][1])
+                stringlist.append(temp)
+
+            elif polinomio[i][1] == 1 and polinomio[i][0] != 1 and polinomio[i][0]!=-1:
+                temp=str(polinomio[i][0])+'x'
+                stringlist.append(temp)
+
+            elif polinomio[i][1] > 1 and polinomio[i][0] == 1 :
+                temp='x^'+str(polinomio[i][1])
+                stringlist.append(temp)
+
+            elif polinomio[i][1] > 1 and polinomio[i][0] == -1 :
+                temp='-x^'+str(polinomio[i][1])
+                stringlist.append(temp)
+
+            elif polinomio[i][1] == 1 and polinomio[i][0] == 1:
+                temp='x'
+                stringlist.append(temp)
+
+            elif polinomio[i][1] == 1 and polinomio[i][0] == -1:
+                temp='-x'
+                stringlist.append(temp)
+
+            elif polinomio[i][1] == 0 and polinomio[i][0]!=0:
+                temp=str(polinomio[i][0])
+                stringlist.append(temp)
+            
+        elif polinomio[i][1] =='NULL' and polinomio[i][0] != 0 :
+            temp=str(polinomio[i][0])
+            stringlist.append(temp)
+
+    temp='+'.join(stringlist)
+    temp=temp.replace('+-','-')
+
+    return temp
+
+def verificacaracter(string): #Verificar que todos los caracteres esten bien escritos (OJO SOLO PARA LA ENTRADA DE DATOS NO USAR EN FUNCIONES DE CADA UNO)
+    habilitado=['0','1','2','3','4','5','6','7','8','9','^','-','+','x']
     num=0
     exp=0
-
+    ban=False
     controla=0
+    #Vemos si lo que se escribio esta dentro de la lista
     for i in string:
-        if i in habilitado[:10]:
-            num+=1
-        elif i in habilitado[10:]:
-            exp+=1
-        
-    if num+exp == len(string) and num !=0:
-        return True
-    elif num+exp != len(string):
-        return False
-    return False
+        if i in habilitado:
+            ban=True
+        else:
+            ban=False
+    #Si todo lo que se escribio esta dentro de la lista, controlamos el orden en que se escribio
+    actual=string[0]
+    escrito=False
+    if ban == True:
+        if len(string) > 1:
+            for i in range(1,len(string)):
 
-def verificaexponente(matriz):
+                if actual in habilitado[:10] and string[i] in habilitado[10:]:
+                    escrito=True
+
+                elif actual in habilitado[10:-1] and string[i] in habilitado[:10]:
+
+                    escrito=True
+
+                elif actual in habilitado[:10] and string[i] in habilitado[:10]:
+
+                    escrito=True
+                
+                elif actual in habilitado[11:-1] and string[i] =='x':
+                    escrito=True
+
+                elif actual in '^' and string[i] =='+':
+                    escrito=False
+                    break
+
+                else:
+                    escrito=False
+                actual=string[i]
+
+        else:
+            if actual in habilitado[:10] or actual == 'x':
+                escrito=True
+            else:
+                escrito=False
+
+    return escrito
+
+def verificaexponente(matriz):#Verificar que todos los exponentes esten bien escritos (OJO SOLO PARA LA ENTRADA DE DATOS NO USAR EN FUNCIONES DE CADA UNO)
     #Vemos si todos los exponentes son > 0 y <=12
     cont=0
     cont1=0
-    for i in range(len(matriz)):
-        if not isinstance(matriz[i][1],str):
+    for i in range(len(matriz)): 
+        if not isinstance(matriz[i][1],str): #CASO ESPECIAL-> NO CONSIDERAMOS LOS TERMINOS INDEPENDIENTES NOS FIJAMOS EN LOS EXPONENTES
             if matriz[i][1] > 0 and matriz[i][1] <= 12:
                 cont+=1
         else:
@@ -40,30 +120,35 @@ def verificaexponente(matriz):
         return True
     return False
 
-def listtostring(polinomio):
-    stringlist=[]
-    for i in range(len(polinomio)):
-        if polinomio[i][1] != 0 and polinomio[i][1] != 'NULL':
-            temp=str(polinomio[i][0])+'x^'+str(polinomio[i][1])
-            stringlist.append(temp)
-        elif polinomio[i][1] == 0 and polinomio[i][0] !=0:
-            temp=str(polinomio[i][0])
-            stringlist.append(temp)
+def repetidos(matrizpol):#En caso de exponentes del mismo grado suman todos esos
+    sinrepetir=[]
+    matrizpolsim=[]
+    ind=0
+    for i in range(len(matrizpol)):
+        if matrizpol[i][1] not in sinrepetir:
+            sinrepetir.append(matrizpol[i][1])
+            matrizpolsim.append([0,matrizpol[i][1]])
+            matrizpolsim[ind][0] += matrizpol[i][0]
+            ind+=1
 
-    #for i in range(len(stringlist)): stringlist.pop(i) if stringlist[i] == '' else 0 #Cuando derivam
+        elif matrizpol[i][1]  in sinrepetir:
+            expindice=sinrepetir.index(matrizpol[i][1])
+            matrizpolsim[expindice][0] += matrizpol[i][0]
+    for i in range(len(matrizpolsim)-1):
+        for j in range(len(matrizpolsim)-1):
+            if not isinstance(matrizpolsim[j][1],str) and not isinstance(matrizpolsim[j+1][1],str):
+                if matrizpolsim[j][1] < matrizpolsim[j+1][1]:
+                    matrizpolsim[j],matrizpolsim[j+1]=matrizpolsim[j+1],matrizpolsim[j]
 
-    temp='+'.join(stringlist)
-    temp=temp.replace('+-','-')
+            elif isinstance(matrizpolsim[j][1],str):
+                    matrizpolsim[j],matrizpolsim[j+1]=matrizpolsim[j+1],matrizpolsim[j]
+            
+    return matrizpolsim
 
-    return temp
-
-
-def separapolinomio(string):
+def separapolinomio(string): #Separamos el polinomio en una matriz nx2
     #Ya que es mucho mas facil separar el string con split hacemos lo siguiente
-    
     #En caso de que haya espacios vacios, los eliminamos
     string =string.replace(' ','')
-
     #Ya que es mas facil separar cada termino separado por el signo +
     #Procedemos a hacer lo siguiente
     string = re.sub('\^-', 'neg', string) #Primero-> En caso de encontrar exponentes negativos - > cambiarlo por el identificador neg
@@ -73,58 +158,74 @@ def separapolinomio(string):
 
     sub = string.split('+')               #Separamos cada termino en una lista
 
-    if sub[0]=='':
+    if sub[0]=='': #Un caso especial, si es que
         temp=sub.index('')
         sub.pop(temp)
-
+    print(sub)
     #Creamos nuestra matriz que tendra el siguiente formato-> (Por la cantidad de terminos introducidos se crearan Nx2 boxes, donde -> [coeficiente, exponente])
     matrizpol=[]
-    for i in range(len(sub)):
+    for i in range(len(sub)):#3X- > 3->0 -> 3->0
         matrizpol.append([0,0])
-    #Empezamos a guardar los coeficientes y exponentes
-    for i in range(len(sub)):
+    #Empezamos a guardar los coeficientes y exponentes 3x^5+6x^4+7 -> [3x^5,]
+    for i in range(len(sub)): #
         #Tenemos dos casos, terminos con o sin exponentes
-        if '^' in sub[i]: #En caso de exponentes vemos donde comienza
+        equis=['x','-','-x']
+        if '^' in sub[i] and 'x' in sub[i]: #En caso de exponentes vemos donde comienza el exp
             expindice=sub[i].index('^')
             
-            if sub[i][0] != 'x' and sub[i][0:2] !='-x': 
+            if sub[i][0] != 'x' and sub[i][0:2] !='-x':  #A partir de ahi vemos si es un termino con coeficiente mayor a 1
+                #Copiamos el coeficiente en la sublista correspondiente [coeficiente,exponente]
                 matrizpol[i][0]=int(sub[i][0:expindice-1])
                 
-            elif sub[i][0] == 'x':
+            elif sub[i][0] == 'x':#En caso de que el termino actual sea solo x indica que el coeficiente es 1
                 matrizpol[i][0]=1 
 
-            elif sub[i][0:2] == '-x' :
+            elif sub[i][0:2] == '-x' :#En caso de que el termino actual sea solo -x indica que el coeficiente es -1
                 matrizpol[i][0]=-1
 
-            matrizpol[i][1]=int(sub[i][expindice+1:])
+            matrizpol[i][1]=int(sub[i][expindice+1:]) #Una vez hecho el tema de los coeficiente sacamos el exponente 
             
-        elif '^' not in sub[i] and 'x' not in sub[i]:
-            matrizpol[i][0]=int(sub[i])
+        elif '^' not in sub[i] and 'x' not in sub[i]: #CASO SOLO TERMINO INDEPENDIENTE
+            matrizpol[i][0]=int(sub[i]) #Insertamos el termino independiente
+            matrizpol[i][1]='NULL' #Ponemos en NULL el lugar para los exponentes
+
+        elif '^' not in sub[i] and 'x' in sub[i]: #Caso de que se ingrese un termino con x sin ^ -> ya que es tedioso que el usuario escriba x^1 
+            xindice=sub[i].index('x') #Buscamos donde se encuentra la x
+            if len(sub[i][:xindice]) > 1: #Si el largo de los caracteres enfrente de la x son mayores a 0 copiamos lo que hay
+                matrizpol[i][0]=int(sub[i][:xindice])
+                matrizpol[i][1]=1
+            else:#Caso contrario ponemos las casillas de coef y exp en 1
+                if sub[i][:xindice] == '-':
+                    matrizpol[i][0]=-1
+                    matrizpol[i][1]=1
+                elif sub[i][:xindice]=='':
+                    matrizpol[i][0]=1
+                    matrizpol[i][1]=1
+                else:
+                    matrizpol[i][0]=int(sub[i][:xindice])
+                    matrizpol[i][1]=1
+
+        elif '^' in sub[i] and 'x' not in sub[i]:
+            expindice1=sub[i].index('^')
+            matrizpol[i][0]=int(sub[i][:expindice1]) ** int(sub[i][expindice1+1:])
             matrizpol[i][1]='NULL'
 
-        elif '^' not in sub[i] and 'x' in sub[i]:
-            xindice=sub[i].index('x')
-            matrizpol[i][0]=int(sub[i][:xindice])
-            matrizpol[i][1]=1
     
     return matrizpol
-
 #Casos 
 firstclick=True #-> Sirve para controlar el cursor
 
 #Opciones
 def raicespol(polinomioingresado):
-    polinomiostring=polinomioingresado[0]
-    valorx=polinomioingresado[1]
-    valory=polinomioingresado[2]
+    polinomio=separapolinomio(polinomioingresado[0])
+    valores=[int(polinomioingresado[1]),int(polinomioingresado[2])]
     
     print("CASO 1",polinomioingresado[0],polinomioingresado[1],polinomioingresado[2])
     return polinomioingresado
 
 def maxminpol(polinomioingresado):
-    polinomiostring=polinomioingresado[0]
-    valorx=polinomioingresado[1]
-    valory=polinomioingresado[2]
+    polinomio=separapolinomio(polinomioingresado[0])
+    valores=[int(polinomioingresado[1]),int(polinomioingresado[2])]
 
     print("CASO 2",polinomioingresado[0],polinomioingresado[1],polinomioingresado[2])
     return polinomioingresado
@@ -134,12 +235,14 @@ def derivapol(polinomioingresado):
     print("CASO 3",polinomioingresado[0])
     #Primero separamos el polinomio en una matriz de acuerdo a la cantidad de terminos
     polinomio=separapolinomio(derivadastring)
+    polinomio=repetidos(polinomio)
     print(f"Antes de derivar {derivadastring}")
     for i in range(len(polinomio)):
         if polinomio[i][1] == 0:
             polinomio[i][0]=0
         elif polinomio[i][1]=='NULL':
             polinomio[i][0]=0
+
         else:
             #Bajamos el exponente y multiplicamos al coeficiente
             polinomio[i][0]*=polinomio[i][1]
@@ -155,23 +258,97 @@ def derivapol(polinomioingresado):
     return polformat
 
 def integrapol(polinomioingresado):
-    print("CASO 4",polinomioingresado[0],polinomioingresado[1],polinomioingresado[2])
-    return polinomioingresado
+    polinomio=separapolinomio(polinomioingresado[0])
+    valores=[int(polinomioingresado[1]),int(polinomioingresado[2])]
+    valores.sort(reverse=True)
+    maximo=0
+    minimo=0
 
-def graficapol(polinomioingresado,ventana): #2x^3+6 -> 2x**3+6
-    gra=Toplevel(ventana)
-    gra.grab_set()
+    for i in range(len(polinomio)):
+
+        if polinomio[i][1]=='NULL':
+            polinomio[i][1]=0
+            polinomio[i][0]=Fraction(polinomio[i][0],polinomio[i][1]+1)
+            polinomio[i][1]+=1
+
+        else:
+            #Sumamos 1 a el exponente y dividimos al coeficiente
+            polinomio[i][0]=Fraction(polinomio[i][0],polinomio[i][1]+1)
+            polinomio[i][1]+=1
+
+    for i in range(len(polinomio)):
+        if polinomio[i][1] != 0:
+            maximo+=polinomio[i][0] * valores[0]**polinomio[i][1]
+            minimo+=polinomio[i][0] * valores[1]**polinomio[i][1]
+        else:
+            maximo+=polinomio[i][0]
+            minimo+=polinomio[i][0]
+    
+    integraldef=maximo-minimo
+    
+
+    print("CASO 4",polinomioingresado[0],polinomioingresado[1],polinomioingresado[2])
+    
+    return integraldef
+
+
+
+
+def graficapol(polinomioingresado): #2x^3+6 -> 2x**3+6
+    def PolinomioAConcatenar(s,x): #s -> matriz polinomio
+        for i in range(len(s)):
+            if s[i][1] =='NULL':
+                s[i][1]=0
+            
+        PolCon=s[0][0]*x**s[0][1]
+        
+        for i in range(1,len(s)):
+            PolCon = PolCon + s[i][0] * x ** float(s[i][1])
+        return PolCon
+
+    def Lambda(temp1,x1):
+        return PolinomioAConcatenar(temp1,x1)
+
     print("CASO 5",polinomioingresado[0],polinomioingresado[1],polinomioingresado[2])
-    return polinomioingresado
+    temp = separapolinomio(polinomioingresado[0])
+    x_0, x_N = float(polinomioingresado[1]), float(polinomioingresado[2])
+    N = 100
+    dx = (x_N - x_0) / N
+    xs = [x_0 + dx * i for i in range(N + 1)]
+    ys = []
+    for i in range(N + 1):
+        x = xs[i]
+        y = Lambda(temp, x)
+        ys.append(y)
+    plt.plot(xs, ys, label='sin(%.3fx)' % (1 / 3.805))
+    plt.legend()
+    plt.grid()
+    plt.show()
+    return 'La ventana del grafico acaba de ser cerrada'
 
 def sumpol(polinomioingresado):
+    polinomio1=separapolinomio(polinomioingresado[0])
+    polinomio2=separapolinomio(polinomioingresado[1])
+
     print("Caso 1 doble",polinomioingresado[0],polinomioingresado[1])
+    
     return polinomioingresado
 
 def mulpol(polinomioingresado):
+    polinomio1=separapolinomio(polinomioingresado[0])
+    polinomio2=separapolinomio(polinomioingresado[1])
+
     print("Caso 2 doble",polinomioingresado[0],polinomioingresado[1])
     return polinomioingresado
 
+
+
+
+
+
+
+
+#Apartado de ventanas, configuracion de las mismas, botones,etc.
 #Funcion centrar
 #Sirve para centrar cada ventana nueva abierta al centro del monitor donde se abre la aplicacion
 def centrar(root):
@@ -223,7 +400,7 @@ def ultima(bloquetipo,verifica,ingresolista):
         elif casodado == 3:
             respuesta=integrapol(ingresolista) 
         elif casodado == 4:
-            respuesta=graficapol(ingresolista,resultado) 
+            respuesta=graficapol(ingresolista) 
 
     elif verifica in opciones2:
         casodado1=opciones2.index(verifica)
@@ -232,20 +409,14 @@ def ultima(bloquetipo,verifica,ingresolista):
         elif casodado1 == 1:
             respuesta=mulpol(ingresolista)
 
-
-    #Abrimos nuestra ultima ventana
-
-
     #Fondo ultima fase
     bg1 = PhotoImage(file="ico/Last page.png")
     bg2 = PhotoImage(file="ico/Last page 2.png")
     label1 = Label(resultado,image=bg1)
     label1.place(x=0,y=0,relwidth=1,relheight=1)
 
-    #Sujeto a cambios de orden
     #Respuesta
-    if verifica != 'Graficar el polinomio': 
-        answer=Label(resultado,text=respuesta,font=('Arial',11),bg='white',width=60,height=2).place(x=223,y=334)
+    answer=Label(resultado,text=respuesta,font=('Arial',11),bg='white',width=60,height=2).place(x=223,y=334)
 
 
     #Botones
@@ -348,6 +519,8 @@ def opcionmenu(bloquetipo,**datosingresados):#Ya que el numero de elementos por 
 
             varxey.mainloop()
 
+
+
     #Desplegar las opciones disponibles de acuerdo al bloquetipo
     def elegir(opciones):
         opcelegida1.set(opciones[0]) #Aca debe de variar
@@ -364,12 +537,15 @@ def opcionmenu(bloquetipo,**datosingresados):#Ya que el numero de elementos por 
         else:
             messagebox.showinfo("Alerta","Seleccione una opción")
 
+
+
     options=Tk()
     centrar(options)
     #Declaraciones de opciones disponibles
     opciones1 = ['                                                                               Seleccione una opción                                                                      ','Obtener raíces reales de la ecuación ', 'Obtener puntos máximos y mínimos de la función ', 'Calcular la derivada de la función ', 'Calcular la integral de la función','Graficar el polinomio']
     opciones2 = ['                                                                               Seleccione una opción                                                                      ','Obtener suma de polinomios', 'Obtener producto de dos polinomios']
     opcelegida1 = StringVar()
+
 
     bg1 = PhotoImage(file="ico/Menu desplega.png")
     label1 = Label(options,image=bg1)
@@ -392,6 +568,8 @@ def opcionmenu(bloquetipo,**datosingresados):#Ya que el numero de elementos por 
 
     options.mainloop()
 
+
+
 def secondpage():
     def goback():
         mainpage.destroy()
@@ -413,7 +591,6 @@ def secondpage():
 
         elif posi == 2:
             entradanombre1.insert(posicion2,caracter) 
-
     def cambio(click):
         global posi
         posi= click
@@ -425,22 +602,24 @@ def secondpage():
     def validarentrada(bloquetipo):
         polinomio0ingresado=stringvar0.get()
         polinomio1ingresado=stringvar1.get()
-        
+
+
 
         if bloquetipo == 1:
             if not entradanombre0.get():
                 messagebox.showinfo("Alerta","La celda no puede estar vacia")
 
-            #Agregar else dp
+            
             else:
                 if verificacaracter(polinomio0ingresado):
                     check1=separapolinomio(polinomio0ingresado)
+
                     if verificaexponente(check1):
                         main2opt(bloquetipo,polinomio0ingresado,polinomio1ingresado)
                     else:
                         messagebox.showinfo("Alerta","Verifique que todos los exponentes esten dentro del rango 0<exp<=12")
                 else:
-                    messagebox.showinfo("Alerta","Por Favor utilice los botones prestablecido para introducir el polinomio")
+                    messagebox.showinfo("Alerta","Inserte una expresion matematica valida, utilice los botones preestablecidos.")
         else:
 
             if not entradanombre0.get() and entradanombre1.get() :
@@ -461,10 +640,62 @@ def secondpage():
                         messagebox.showinfo("Alerta","Verifique que todos los exponentes esten dentro del rango 0<exp<=12")
                         
                 else:
-                    messagebox.showinfo("Alerta","Por favor utilice los botones prestablecido para introducir el polinomio")
-                    messagebox.showinfo("Alerta","No esta permitido el uso de letras")
+                    messagebox.showinfo("Alerta","Inserte una expresion matematica valida, utilice los botones preestablecidos.")
 
                 #main2opt(bloquetipo,polinomio0ingresado,polinomio1ingresado)
+    def graph(event=None):
+        tmptext=''
+        tmptext0 = stringvar0.get()
+        tmptext1 = stringvar1.get()
+        if posi == 1:
+            tmptext=tmptext0
+        elif posi == 2:
+            tmptext=tmptext1
+        
+        
+        if len(tmptext) > 0:
+            tmptext=tmptext.replace(' ','')
+            tmptext=re.sub('\^-', 'neg', tmptext)
+            tmptext=tmptext.replace('-','+-')
+            tmptext=tmptext.replace('neg','^-')
+
+            partes=tmptext.split('+')
+            cantidadexp=0
+            cantidadexpverificados=0        
+            for i in partes:
+                if '^' in i:
+                    cantidadexp+=1
+                    indiceverificar=i.index('^')
+                    if indiceverificar != len(i)-1:
+                        cantidadexpverificados+=1
+
+
+            if cantidadexp == cantidadexpverificados:
+                for i in range(len(partes)):
+
+                    if '^' in partes[i] and partes[i][-1] != '^':
+                        indice=partes[i].index('^')
+                        partes[i]=partes[i][:indice+1]+'{'+partes[i][indice+1:]+'}'
+                        temp='+'.join(partes)
+                        temp=temp.replace('+-','-')
+                        tmptext=temp
+                        
+                        tmptext = "$"+tmptext+"$"
+
+                if posi == 1:
+                    ax.clear()
+                    ax.text(0, 0.6, tmptext, fontsize=12)  
+                    canvas.draw()
+
+                elif posi == 2:
+                    ax.clear()
+                    ax.text(0, 0.6, tmptext, fontsize=12)  
+                    canvas.draw()
+
+                        
+        if len(tmptext) == 0 :
+            ax.clear()
+            canvas.draw()
 
     mainpage = Tk()
     mainpage.title("Calculadora de polinomios")
@@ -483,8 +714,27 @@ def secondpage():
     stringvar0=StringVar()
     entradanombre0=Entry(mainpage,textvariable=stringvar0,width=76,border=0,font=('Arial',12),cursor="xterm")
     entradanombre0.place(x=212.1, y=340, width=613, height=20)
+    mainframe = Frame(mainpage)
+    mainframe.place(x=172,y=459)
+
+    bloquecheck=Label(mainframe)
+    bloquecheck.pack()
+
+    fig = matplotlib.figure.Figure(figsize=(6.95, 0.2), dpi=100)
+    ax =fig.add_axes([0,0,0,0])
+    canvas = FigureCanvasTkAgg(fig, master=bloquecheck)
+    canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
+    canvas._tkcanvas.pack(side="top", fill="both", expand=True)
+
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+
+    mainpage.bind("<Key>", graph)
+
     def gotovalid(event):
         validarentrada(1)
+    def delete(entry):
+        entry.delete(0, 'end')
 
     entradanombre0.bind('<Return>',gotovalid) #ver si dejar o no
     #Botones 
@@ -517,7 +767,7 @@ def secondpage():
     proceder1 = PhotoImage(file="ico/Siguiente.png")
     procedelabel1 = Label(image=proceder1)
     procedeboton1 = Button(bloqueuno,image=proceder1,borderwidth=0,bg="#B9CED9",activebackground='#B9CED9',command=lambda:validarentrada(1),cursor="hand2")
-    procedeboton1.place(x=843,y=332)
+    procedeboton1.place(x=876,y=332)
 
     #Retroceder a la Homepage
     atrasimg = PhotoImage(file="ico/back.png")
@@ -525,7 +775,15 @@ def secondpage():
     atrasboton = Button(bloqueuno,image=atrasimg,borderwidth=0,command=goback,bg="#B9CED9",activebackground='#B9CED9',cursor="hand2")
     atrasboton.place(x=4,y=553)
 
+    #Boton vaciar
+    clearimg = PhotoImage(file="ico/clean.png")
+    clearlabel = Label(image=clearimg)
+    clearboton = Button(bloqueuno,image=clearimg,borderwidth=0,command=lambda:delete(entradanombre0),bg="#B9CED9",activebackground='#B9CED9',cursor="hand2")
+    clearboton.place(x=832,y=333)
+
+
     #Mainpage 2
+    
     bg2 = PhotoImage(file="ico/Ingrese 2.png")
     label2 = Label(bloquedos,image=bg2)
     label2.place(x=0,y=0,relwidth=1,relheight=1)
@@ -534,6 +792,7 @@ def secondpage():
     stringvar1=StringVar()
     entradanombre1=Entry(bloquedos,textvariable=stringvar1,width=76,border=0,font=('Arial',12),cursor="xterm")
     entradanombre1.place(x=212.1, y=382, width=613, height=20)
+    
     def gotovalid2(event):
         validarentrada(2)
 
@@ -565,7 +824,7 @@ def secondpage():
     proceder = PhotoImage(file="ico/Siguiente.png")
     procedelabel = Label(image=proceder)
     procedeboton = Button(bloquedos,image=proceder,borderwidth=0,bg="#B9CED9",activebackground='#B9CED9',command=lambda:validarentrada(2),cursor="hand2")
-    procedeboton.place(x=845,y=357)
+    procedeboton.place(x=880,y=348)
 
 
     #Boton para volver al bloque donde hay un solo bloque de texto (Lo escrito en el primer bloque no se borra para ahorra tiempo de carga de polinomio)
@@ -574,7 +833,17 @@ def secondpage():
     desplegaboton1 = Button(bloquedos,image=desplegaimg1,borderwidth=0,command=main2tomain1,bg="#B9CED9",activebackground='#B9CED9',cursor="hand2")
     desplegaboton1.place(x=166,y=333)
 
-    
+    #Vaciar
+    clearimg1 = PhotoImage(file="ico/clean.png")
+    clearlabel1 = Label(image=clearimg1)
+    clearboton1 = Button(bloquedos,image=clearimg1,borderwidth=0,command=lambda:delete(entradanombre0),bg="#B9CED9",activebackground='#B9CED9',cursor="hand2")
+    clearboton1.place(x=832,y=332)
+
+    clearimg2 = PhotoImage(file="ico/clean.png")
+    clearlabel2 = Label(image=clearimg2)
+    clearboton2 = Button(bloquedos,image=clearimg2,borderwidth=0,command=lambda:delete(entradanombre1),bg="#B9CED9",activebackground='#B9CED9',cursor="hand2")
+    clearboton2.place(x=832,y=374)
+
     #Volver a la homepage
     atrasimg1 = PhotoImage(file="ico/back.png")
     atraslabel1 = Label(image=atrasimg1)
@@ -592,6 +861,9 @@ def main():
         homepage.destroy()
         secondpage()
     
+    def salir():
+        homepage.destroy()
+
     #Declaramos nueva ventana
     homepage = Tk()
     homepage.title("Calculadora de polinomios")
@@ -608,6 +880,13 @@ def main():
     starbutton = Button(homepage,image=starimg,borderwidth=0,command=nextpageboton,cursor="hand2")
     starbutton.place(x=335,y=416)
 
+    #SALIR
+    salirimg = PhotoImage(file="ico/cerrar.png")
+    salirlabel = Label(image=salirimg)
+    salirboton = Button(homepage,image=salirimg,borderwidth=0,command=salir,cursor="hand2",bg="#B7AFBE",activebackground="#B7AFBE")
+    salirboton.place(x=911,y=575)
+
     homepage.mainloop()
+
 
 main()
