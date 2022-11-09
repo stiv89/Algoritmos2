@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from fractions import Fraction
 import matplotlib
+
 import matplotlib.pyplot as plt
 import math
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -279,6 +280,9 @@ def derivapol(polinomioingresado):
     return polformat #Devolvemos la derivada
 
 def integrapol(polinomioingresado): #Misma tematica de la derivada solo que ahora sumamos uno al exp y dividimos al coeficiente
+    def create_mathtext(a,b):
+        return r'$\frac{%s}{%s}$' % tuple(map(str, [a, b]))
+
     polinomio=creapol(polinomioingresado[0])
     valores=[int(polinomioingresado[1]),int(polinomioingresado[2])]
     valores.sort(reverse=True)
@@ -306,12 +310,16 @@ def integrapol(polinomioingresado): #Misma tematica de la derivada solo que ahor
             minimo+=polinomio[i][0]
     
     integraldef=maximo-minimo 
-    
 
-    #print("CASO 4",polinomioingresado[0],polinomioingresado[1],polinomioingresado[2])
-    
-    return integraldef
+    if type(integraldef) == Fraction:
+        numerador=integraldef.numerator
+        denominador=integraldef.denominator
+        print('numerador',type(numerador),'denominador',denominador)
+        #grafic=create_mathtext(numerador,denominador) -> just in case
+        grafic='$'+str(numerador) +'/'+str(denominador)+'$'
 
+        return grafic
+    
 
 
 
@@ -406,27 +414,29 @@ def ultima(bloquetipo,verifica,ingresolista): #Recibimos el tipo de bloque que l
         opcionmenu(bloquetipo,polinomioingresado=ingresolista[0],polinomioingresado2=ingresolista[1]) #Volvemos a mandar lo que ya se ingreso, se puede agregar muchos elementos ya que usamos **name
     def graphresult(polinomio):
         habilitado=['0','1','2','3','4','5','6','7','8','9','^','-','+','x']
-        tmptext=''
-        polinomio = polinomio.replace('-','+-')
-        partes=polinomio.split('+')
-        ban=True
-        for i in polinomio:
-            if i not in habilitado:
-                ban=False
-        if ban == True:
-            for i in range(len(partes)):
-                if '^' in partes[i]:
-                    indice=partes[i].index('^') #Buscamos el indice
-                    partes[i]=partes[i][:indice+1]+'{'+partes[i][indice+1:]+'}' #Encerramos el exponente en brackets
-                    temp='+'.join(partes)
-                    temp=temp.replace('+-','-')
-                    tmptext=temp
-                    tmptext = "$"+tmptext+"$" #Ya que es una expresion matematica que va a ser traducida gracias a matploitb debemos agregar el simbolo $ al inicio y final
-                
-                else:
-                    tmptext = "$"+polinomio+"$" #Ya que es una expresion matematica que va a ser traducida gracias a matploitb debemos agregar el simbolo $ al inicio y final
+        tmptext='' 
+        if '+'  in polinomio or '-'  in polinomio:
+            polinomio = polinomio.replace('-','+-')
+            partes=polinomio.split('+')
+            ban=True
+            for i in polinomio:
+                if i not in habilitado:
+                    ban=False
+            if ban == True:
+                for i in range(len(partes)):
+                    if '^' in partes[i]:
+                        indice=partes[i].index('^') #Buscamos el indice
+                        partes[i]=partes[i][:indice+1]+'{'+partes[i][indice+1:]+'}' #Encerramos el exponente en brackets
+                        temp='+'.join(partes)
+                        temp=temp.replace('+-','-')
+                        tmptext=temp
+                        tmptext = "$"+tmptext+"$" #Ya que es una expresion matematica que va a ser traducida gracias a matploitb debemos agregar el simbolo $ al inicio y final
+                    
+                    else:
+                        tmptext = "$"+polinomio+"$" #Ya que es una expresion matematica que va a ser traducida gracias a matploitb debemos agregar el simbolo $ al inicio y final
         else:
             tmptext=polinomio
+
         ax.clear()
         ax.text(0, 0.6, tmptext, fontsize=12)
         
@@ -471,12 +481,12 @@ def ultima(bloquetipo,verifica,ingresolista): #Recibimos el tipo de bloque que l
 
     #Para mostrar el resultado correspondiente en la pantalla reutilizamos el codigo de reescribir la ecuacion generica a una mas legible pero con algunas modificaciones mas simples
     mainframe = Frame(resultado) #Creamos un frame para el mismo
-    mainframe.place(x=100,y=341)#Lo posicionamos 
+    mainframe.place(x=100,y=337)#Lo posicionamos 
 
     bloquecheck=Label(mainframe)#Label para poner el resultado
     bloquecheck.pack()
 
-    fig = matplotlib.figure.Figure(figsize=(8.05, 0.2), dpi=100) 
+    fig = matplotlib.figure.Figure(figsize=(8.05, 0.29), dpi=100) 
     ax =fig.add_axes([0,0,0,0]) #Arreglo para que no se vean los ejes
 
     canvas = FigureCanvasTkAgg(fig, master=bloquecheck)
