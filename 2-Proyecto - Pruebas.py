@@ -227,8 +227,8 @@ def creapol(string): #Separamos el polinomio en una matriz nx2
             matrizpol[i][0]=int(sub[i][:expindice1]) ** int(sub[i][expindice1+1:])
             matrizpol[i][1]='NULL'
 
-    
-    return matrizpol #Devolvemos nuestra matriz creapol
+    matrizfin=repetidos(matrizpol)
+    return matrizfin #Devolvemos nuestra matriz creapol
 
 
 
@@ -257,7 +257,6 @@ def derivapol(polinomioingresado):
     # #Primero separamos el polinomio en una matriz de acuerdo a la cantidad de terminos
 
     polinomio=creapol(derivadastring)
-    polinomio=repetidos(polinomio)
 
     # print(f"Antes de derivar {derivadastring}")
     for i in range(len(polinomio)):
@@ -359,12 +358,17 @@ def graficapol(polinomioingresado):
     return 'La ventana del grafico acaba de ser cerrada'
 
 def sumpol(polinomioingresado):
-    polinomio1=creapol(polinomioingresado[0])
-    polinomio2=creapol(polinomioingresado[1])
+    #Inicializamos la matriz con los valores de la cadena
+    polsuma=polinomioingresado[0]+'+'+polinomioingresado[1]
+    polsuma=polsuma.replace('+-','-')
+    polsumamat=creapol(polsuma)
+    polsumamatstr=listtostring(polsumamat)
+    print(f"Antes de sumar: {polinomioingresado[0]} y {polinomioingresado[1]}")
+    print(f"Despues de sumar: {polsumamatstr}")
 
-    print("Caso 1 doble",polinomioingresado[0],polinomioingresado[1])
-    
-    return polinomioingresado
+    imprime=polsumamatstr
+
+    return imprime
 
 
 def mulpol(polinomioingresado):
@@ -403,7 +407,7 @@ def ultima(bloquetipo,verifica,ingresolista): #Recibimos el tipo de bloque que l
 
     def leavethird2add():#Dejamos la ultima fase para volver a la ventana donde se ingresan mas polinomios
         resultado.destroy()
-        secondpage()
+        secondpage('','')
 
     def leavethird2home():#Dejamos la ultima fase para volver a la ventana donde empieza todo
         resultado.destroy()
@@ -529,7 +533,7 @@ def opcionmenu(bloquetipo,**datosingresados):#Ya que el numero de elementos por 
 
     def gobackinput():#Del menu de opciones volver a la pagina donde se ingresan los polinomios
         options.destroy()
-        secondpage()
+        secondpage(polinomioingresado,polinomioingresado2)
 
     def clickopt(): #Una vez elegida la opcion el boton de continuar nos redirige aca
 
@@ -542,7 +546,7 @@ def opcionmenu(bloquetipo,**datosingresados):#Ya que el numero de elementos por 
         
         def gobackinput():#En caso de querer volver al input
             varxey.destroy()
-            secondpage()
+            secondpage(polinomioingresado,polinomioingresado2)
             
         #De acuerdo al proceso elegido pasamos una variable ESPECIFICA a la tercera pagina (podria ser-> tener que introducir dos variables mas o directo a la pagina de resultados)
         options.destroy()
@@ -654,7 +658,7 @@ def opcionmenu(bloquetipo,**datosingresados):#Ya que el numero de elementos por 
 
 
 
-def secondpage():
+def secondpage(polinomioingresado,polinomioingresado2):
     def goback():
         mainpage.destroy()
         main()
@@ -808,7 +812,7 @@ def secondpage():
     stringvar0=StringVar()
     entradanombre0=Entry(mainpage,textvariable=stringvar0,width=76,border=0,font=('Arial',12),cursor="xterm")
     entradanombre0.place(x=212.1, y=340, width=613, height=20)
-
+    entradanombre0.insert(0,polinomioingresado)
     #Para traducir la expresion generica a mas legible
     mainframe = Frame(mainpage) #Creamos un frame para el mismo
     mainframe.place(x=172,y=459)#Lo posicionamos 
@@ -893,6 +897,7 @@ def secondpage():
     stringvar1=StringVar()
     entradanombre1=Entry(bloquedos,textvariable=stringvar1,width=76,border=0,font=('Arial',12),cursor="xterm")
     entradanombre1.place(x=212.1, y=382, width=613, height=20)
+    entradanombre1.insert(0,polinomioingresado2)
     
     def gotovalid2(event):
         validarentrada(2)
@@ -960,7 +965,7 @@ def main():
     #Sirve para empezar todo el proceso en si e ir a la nueva ventana 
     def nextpageboton():
         homepage.destroy()
-        secondpage()
+        secondpage('','')
     
     def salir():
         homepage.destroy()
